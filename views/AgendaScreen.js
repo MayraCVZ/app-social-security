@@ -1,32 +1,65 @@
 import React, { useEffect, useState } from "react";
-import { TextInput, TouchableOpacity, Text, StyleSheet, Platform,View } from "react-native";
+import { TextInput, TouchableOpacity, Text, StyleSheet, Platform, View } from "react-native";
 import { Button } from 'react-native-elements';
 import Icon from 'react-native-vector-icons/FontAwesome';
 import DateTimePicker from '@react-native-community/datetimepicker';
-//import { saveTask, getTask, updateTask } from "../api";
-import Layout from "../components/Layout";
 import { SelectList } from 'react-native-dropdown-select-list'
 
-const AgendaScreen = ({ navigation, route }) => {
-  const [task, setTask] = useState({
-    title: "",
-    description: "",
-  });
-  const [editing, setEditing] = useState(false);
+import Layout from "../components/Layout";
+import config from "../config";
+
+const ClientesScreen = ({ navigation, route }) => {
+  //const { item } = route.params;
+
+  const [editing, setEditing] = useState(true);
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [showPicker, setShowPicker] = useState(false);
-  const [selected, setSelected] = React.useState("");
-    
+  const [selected, setSelected] = useState("");
+  const [selectedTipo, setSelectedTipo] = useState("");
+  const [clientes, setClientes] = useState();
+  const [agenda, setAgenda] = useState({
+    idAgenda: "",
+    nombre: "",
+    fecha: "",
+    tipoCita: "",
+    hora: "",
+    comentario: ""
+  });
+
+  const getClientesData = async () => {
+    try {
+      //   const headers = { "Content-Type": "application/json" };
+      let response = await fetch(config.apiUrl + "/clientes");
+      let data = await response.json();
+      setClientes(data);
+    } catch (error) {
+      console.error(error);
+    }
+  };
+
+  useState(() => {
+    getClientesData();
+  }, []);
+
   const data = [
-    {key:'1', value:'Pedro Perez'//, disabled:true
-  },
-    {key:'2', value:'Claudia Lopez'},
-    {key:'3', value:'Hector gonzalez'},
-    {key:'4', value:'Mauricio Hernandez'},
-    {key:'5', value:'Daniel Guzman'},
-    {key:'6', value:'Angel Marquez'},
-    {key:'7', value:'Ana Valle'},
-]
+    {
+      key: '1', value: 'Firma de Poder Notarial'//, disabled:true
+    },
+    { key: '2', value: 'Cobro de Gastos' },
+    { key: '3', value: 'Recepción de documentos solicitados' },
+    { key: '4', value: 'Diagnostico Jurídico Pensionario' },
+    { key: '5', value: 'Firmar documentos de trámites previos a la pensión' },
+    { key: '6', value: 'Pensión' },
+    { key: '7', value: 'AFORES' },
+    { key: '7', value: 'Cobro de Honorarios' }
+  ]
+
+  /*idAgenda: item.idAgenda,
+    nombre: item.nombre,
+    fecha: item.fecha,
+    tipoCita:item.tipoCita,
+    hora:item.hora,
+    comentario:item.comentario*/
 
   const handleDateChange = (event, date) => {
     setShowPicker(Platform.OS === 'ios');
@@ -44,28 +77,38 @@ const AgendaScreen = ({ navigation, route }) => {
     return selectedDate.toISOString().split('T')[0];
   };
 
-  // if (route && route.params) {
-  //   navigation.setOptions({ headerTitle: "Updating Task" });
-  // }
-
-  useEffect(() => {
-    if (route.params && route.params.id) {
-      setEditing(true);
-      navigation.setOptions({ headerTitle: "Actualizar cita" });
-      /*(async () => {
-        const task = await getTask(route.params.id);
-        setTask({ title: task.title, description: task.description });
-      })();*/
-    }
-  }, []);
+  /*useEffect(() => {
+     navigation.addListener('focus', () => {
+       //console.log(route.params.item.idAgenda)
+       //console.log(navigation)
+       if (route.params && route.params.item.idAgenda) {
+         setEditing(true);
+         //navigation.setOptions({ headerTitle: "Actualizar cita" });
+         (async () => {
+           //const agenda = await getAgenda(route.params.id);
+           setAgenda({
+             idAgenda: item.idAgenda,
+             nombre: item.nombre,
+             fecha: item.fecha,
+             tipoCita: item.tipoCita,
+             hora: item.hora,
+             comentario: item.comentario
+           });
+           setSelected(item.nombre);
+           setSelectedTipo(item.tipoCita);
+           setSelectedDate(new Date(item.fecha));
+         })();
+       }
+     });
+   }, [navigation]);*/
 
   const handleSubmit = async () => {
     try {
       if (!editing) {
-        //await saveTask(task);
+        //await saveagenda(agenda);
       } else {
-        console.log(route.params.id, task)
-        //await updateTask(route.params.id, {...task});
+        console.log(route.params.id, agenda)
+        //await updateagenda(route.params.id, {...agenda});
       }
       navigation.navigate("HomeScreen");
     } catch (error) {
@@ -73,59 +116,60 @@ const AgendaScreen = ({ navigation, route }) => {
     }
   };
 
-  const handleChange = (name, value) => setTask({ ...task, [name]: value });
+  const handleChange = (name, value) => setAgenda({ ...agenda, [name]: value });
 
   return (
     <Layout>
       <Text style={styles.text}>Cliente</Text>
-      <SelectList 
-        setSelected={(val) => setSelected(val)} 
-        data={data} 
+      <SelectList
+        boxStyles={styles.input}
+        setSelected={(val) => setSelected(val)}
+        data={clientes}
         save="value"
         placeholder="Seleccione un cliente"
         placeholderTextColor="#576574"
-        style={styles.input}
-    />
+      />
 
       <Text style={styles.text}>Expediente</Text>
       <TextInput
         style={styles.input}
         placeholder="Expediente"
         placeholderTextColor="#576574"
-        value={task.numExpediente}
+        value={agenda.numExpediente}
         onChangeText={(text) => handleChange("numExpediente", text)}
       />
 
       <Text style={styles.text}>Fecha</Text>
-      <View  style={ styles.container }>
-      <TextInput
-        style={styles.inputCalendar}
-        value={formatSelectedDate()}
-        editable={false}
-        placeholder="dd/mm/yyyy"
-        placeholderTextColor="#576574"
-      //value={task.fecha}
-      //onChangeText={(text) => handleChange("fecha", text)}
-      />
-      <Button
-        icon={
-          <Icon
-            name="calendar"
-            size={20}
-            color="white"
-          />
-        }
-        buttonStyle={styles.buttonCalendar}
-        onPress={showDateTimePicker} />
-      {showPicker && (
-        <DateTimePicker
-          value={selectedDate}
-          mode="date"
-          is24Hour={true}
-          display="spinner"
-          onChange={handleDateChange}
+      <View style={styles.container}>
+        <TextInput
+          style={styles.inputCalendar}
+          value={formatSelectedDate()}
+          editable={false}
+          placeholder="dd/mm/yyyy"
+          placeholderTextColor="#576574"
+          //value={agenda.fecha}
+          onChangeText={(text) => handleChange("fecha", text)}
         />
-      )}
+        <Button
+          icon={
+            <Icon
+              name="calendar"
+              size={20}
+              color="white"
+            />
+          }
+          buttonStyle={styles.buttonCalendar}
+          onPress={showDateTimePicker} />
+        {showPicker && (
+          <DateTimePicker
+            value={selectedDate}
+            mode="date"
+            is24Hour={true}
+            display="spinner"
+            onChange={handleDateChange}
+          //onChangeText={(text) => handleChange("fecha", text)}
+          />
+        )}
       </View>
 
       <Text style={styles.text}>Hora Inicio</Text>
@@ -133,17 +177,18 @@ const AgendaScreen = ({ navigation, route }) => {
         style={styles.input}
         placeholder="hh:mm"
         placeholderTextColor="#576574"
-        value={task.hora}
+        value={agenda.hora}
         onChangeText={(text) => handleChange("hora", text)}
       />
 
       <Text style={styles.text}>Tipo de cita</Text>
-      <TextInput
-        style={styles.input}
+      <SelectList
+        boxStyles={styles.input}
+        setSelected={(val) => setSelectedTipo(val)}
+        data={data}
+        save="value"
         placeholder="Seleccione el tipo de cita"
         placeholderTextColor="#576574"
-        value={task.tipoCita}
-        onChangeText={(text) => handleChange("tipoCita", text)}
       />
 
       <Text style={styles.text}>Comentarios</Text>
@@ -153,7 +198,7 @@ const AgendaScreen = ({ navigation, route }) => {
         placeholderTextColor="#576574"
         multiline={true}
         numberOfLines={4}
-        value={task.comentario}
+        value={agenda.comentario}
         onChangeText={(text) => handleChange("comentario", text)}
       />
 
@@ -227,7 +272,7 @@ const styles = StyleSheet.create({
     borderRadius: 20,
     marginBottom: 3,
     marginTop: 3,
-    marginLeft:10,
+    marginLeft: 10,
     backgroundColor: "#0E55A7",
     elevation: 8,
     width: "60%",
@@ -242,11 +287,11 @@ const styles = StyleSheet.create({
     textAlign: "left",
     fontWeight: "bold",
     fontSize: 16
-  },  
+  },
   container: {
     width: "100%",
     flexDirection: 'row'
   }
 });
 
-export default AgendaScreen;
+export default ClientesScreen;

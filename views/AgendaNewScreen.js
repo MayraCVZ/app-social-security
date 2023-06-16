@@ -3,33 +3,30 @@ import { TextInput, TouchableOpacity, Text, StyleSheet, Platform, View, Alert } 
 import { Button } from 'react-native-elements';
 import Icon from 'react-native-vector-icons/FontAwesome';
 import DateTimePicker from '@react-native-community/datetimepicker';
-import { SelectList, onSelect } from 'react-native-dropdown-select-list';
+import { SelectList } from 'react-native-dropdown-select-list'
 
 import Layout from "../components/Layout";
 import config from "../config";
 
-const SeguimientoScreen = ({ navigation, route }) => {
+const ClientesScreen = ({ navigation, route }) => {
 
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [showPicker, setShowPicker] = useState(false);
   const [selected, setSelected] = useState("");
-  //const [selectedId, setSelectedId] = useState('');
+  const [selectedTipo, setSelectedTipo] = useState("");
   const [clientes, setClientes] = useState();
   const [loading, setLoading] = useState(false);
-  const [detalle, setDetalle] = useState({
+  const [agenda, setAgenda] = useState({
     nombre: "",
     numExpediente: "",
     fecha: "",
-    horaInicio: "",
-    horaFin: "",
-    detalles: ""
+    tipoCita: "",
+    hora: "",
+    comentario: ""
   });
-
-  console.log(selected);
 
   const getClientesData = async () => {
     try {
-      //   const headers = { "Content-Type": "application/json" };
       let response = await fetch(config.apiUrl + "/clientes");
       let data = await response.json();
       setClientes(data);
@@ -41,6 +38,19 @@ const SeguimientoScreen = ({ navigation, route }) => {
   useState(() => {
     getClientesData();
   }, []);
+
+  const data = [
+    {
+      key: '1', value: 'Firma de Poder Notarial'//, disabled:true
+    },
+    { key: '2', value: 'Cobro de Gastos' },
+    { key: '3', value: 'Recepción de documentos solicitados' },
+    { key: '4', value: 'Diagnostico Jurídico Pensionario' },
+    { key: '5', value: 'Firmar documentos de trámites previos a la pensión' },
+    { key: '6', value: 'Pensión' },
+    { key: '7', value: 'AFORES' },
+    { key: '7', value: 'Cobro de Honorarios' }
+  ]
 
   const handleDateChange = (event, date) => {
     setShowPicker(Platform.OS === 'ios');
@@ -60,38 +70,40 @@ const SeguimientoScreen = ({ navigation, route }) => {
 
   useEffect(() => {
     navigation.addListener('focus', () => {
-      setDetalle({
+      setAgenda({
         nombre: "",
         numExpediente: "",
+        tipoCita: "",
+        hora: "",
         fecha: "",
-        horaInicio: "",
-        horaFin: "",
-        detalle: ""
+        comentario: ""
       })
       setSelected('');
+      setSelectedTipo('');
       setSelectedDate(new Date());
       console.log("reloaded");
     });
   }, [navigation]);
 
   const handleSubmit = async () => {
-    detalle.nombre = selected;
-    detalle.fecha = formatSelectedDate();
+    agenda.nombre = selected;
+    agenda.tipoCita = selectedTipo;
+    agenda.fecha = formatSelectedDate();
     setLoading(true);
     var myHeaders = new Headers();
 
     myHeaders.append("Content-Type", "application/json");
 
-    fetch(config.apiUrl + "/seguimientoAsuntos", {
+    fetch(config.apiUrl + "/agenda", {
       method: "POST",
       headers: myHeaders,
       body: JSON.stringify({
-        nombre: detalle.nombre,
-        numExpediente: parseInt(detalle.numExpediente),
-        fecha: detalle.fecha,
-        horaInicio: detalle.horaInicio,
-        horaFin: detalle.horaFin,
-        detalle: detalle.detalles
+        nombre: agenda.nombre,
+        numExpediente: parseInt(agenda.numExpediente),
+        fecha: agenda.fecha,
+        hora: agenda.hora,
+        tipoCita: agenda.tipoCita,
+        comentario: agenda.comentario
       }),
     })
       .then((response) => {
@@ -100,15 +112,16 @@ const SeguimientoScreen = ({ navigation, route }) => {
       })
       .then((result) => {
         Alert.alert("", "Registro guardado.")
-        setDetalle({
+        setAgenda({
           nombre: "",
           numExpediente: "",
+          tipoCita: "",
+          hora: "",
           fecha: "",
-          horaInicio: "",
-          horaFin: "",
-          detalle: ""
+          comentario: ""
         })
         setSelected('');
+        setSelectedTipo('');
         setSelectedDate(new Date());
         console.log("Result");
         console.log(result);
@@ -119,31 +132,18 @@ const SeguimientoScreen = ({ navigation, route }) => {
       });
   };
 
-  const handleChange = (name, value) => setDetalle({ ...detalle, [name]: value });
+  const handleChange = (name, value) => setAgenda({ ...agenda, [name]: value });
 
   return (
     <Layout>
       <Text style={styles.text}>Cliente</Text>
       <SelectList
         boxStyles={styles.input}
-        setSelected={(values) => {
-          setSelected(values)
-        }}
+        setSelected={(val) => setSelected(val)}
         data={clientes}
         save="value"
         placeholder="Seleccione un cliente"
         placeholderTextColor="#576574"
-
-        onChangeText={(text) => handleChange("nombre", text)}
-      /*onSelect={(item) => {
-        console.log(item)
-        //setSelected(values[0]?.value || ''); // Obtiene el valor seleccionado
-        //setSelectedId(values[0]?.key || ''); // Obtiene el ID seleccionado
-      }}*/
-      //value={[{ key: selectedId, label: selected }]}
-      /*onChange={(values) => {
-        console.log(values)
-      }}*/
       />
 
       <Text style={styles.text}>Expediente</Text>
@@ -151,7 +151,7 @@ const SeguimientoScreen = ({ navigation, route }) => {
         style={styles.input}
         placeholder="Expediente"
         placeholderTextColor="#576574"
-        value={detalle.numExpediente}
+        value={agenda.numExpediente}
         onChangeText={(text) => handleChange("numExpediente", text)}
       />
 
@@ -163,8 +163,8 @@ const SeguimientoScreen = ({ navigation, route }) => {
           editable={false}
           placeholder="dd/mm/yyyy"
           placeholderTextColor="#576574"
-        //value={detalle.fecha}
-        //onChangeText={(text) => handleChange("fecha", text)}
+          //value={agenda.fecha}
+          onChangeText={(text) => handleChange("fecha", text)}
         />
         <Button
           icon={
@@ -183,6 +183,7 @@ const SeguimientoScreen = ({ navigation, route }) => {
             is24Hour={true}
             display="spinner"
             onChange={handleDateChange}
+          //onChangeText={(text) => handleChange("fecha", text)}
           />
         )}
       </View>
@@ -192,28 +193,29 @@ const SeguimientoScreen = ({ navigation, route }) => {
         style={styles.input}
         placeholder="hh:mm"
         placeholderTextColor="#576574"
-        value={detalle.horaInicio}
-        onChangeText={(text) => handleChange("horaInicio", text)}
+        value={agenda.hora}
+        onChangeText={(text) => handleChange("hora", text)}
       />
 
-      <Text style={styles.text}>Hora Fin</Text>
-      <TextInput
-        style={styles.input}
-        placeholder="hh:mm"
+      <Text style={styles.text}>Tipo de cita</Text>
+      <SelectList
+        boxStyles={styles.input}
+        setSelected={(val) => setSelectedTipo(val)}
+        data={data}
+        save="value"
+        placeholder="Seleccione el tipo de cita"
         placeholderTextColor="#576574"
-        value={detalle.horaFin}
-        onChangeText={(text) => handleChange("horaFin", text)}
       />
 
-      <Text style={styles.text}>Seguimiento</Text>
+      <Text style={styles.text}>Comentarios</Text>
       <TextInput
         style={styles.inputArea}
         placeholder="Escriba los comentarios"
         placeholderTextColor="#576574"
         multiline={true}
         numberOfLines={4}
-        value={detalle.detalles}
-        onChangeText={(text) => handleChange("detalles", text)}
+        value={agenda.comentario}
+        onChangeText={(text) => handleChange("comentario", text)}
       />
 
       <TouchableOpacity style={styles.buttonSave} onPress={handleSubmit}>
@@ -238,8 +240,8 @@ const styles = StyleSheet.create({
     width: "75%",
     marginBottom: 7,
     fontSize: 14,
-    borderWidth: 1,
     color: "black",
+    borderWidth: 1,
     borderColor: "#0E55A7",
     height: 45,
     padding: 4,
@@ -292,5 +294,4 @@ const styles = StyleSheet.create({
   }
 });
 
-export default SeguimientoScreen;
-
+export default ClientesScreen;
