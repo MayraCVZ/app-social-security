@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { TextInput, TouchableOpacity, Text, StyleSheet, Platform, View } from "react-native";
+import { TextInput, TouchableOpacity, Text, StyleSheet, Platform, View, Alert } from "react-native";
 import { Button } from 'react-native-elements';
 import Icon from 'react-native-vector-icons/FontAwesome';
 import DateTimePicker from '@react-native-community/datetimepicker';
@@ -9,7 +9,7 @@ import Layout from "../components/Layout";
 import config from "../config";
 
 const ClientesScreen = ({ navigation, route }) => {
-  //const { item } = route.params;
+  const { item } = route.params;
 
   const [editing, setEditing] = useState(true);
   const [selectedDate, setSelectedDate] = useState(new Date());
@@ -17,13 +17,15 @@ const ClientesScreen = ({ navigation, route }) => {
   const [selected, setSelected] = useState("");
   const [selectedTipo, setSelectedTipo] = useState("");
   const [clientes, setClientes] = useState();
+  const [loading, setLoading] = useState(false);
   const [agenda, setAgenda] = useState({
-    idAgenda: "",
-    nombre: "",
-    fecha: "",
-    tipoCita: "",
-    hora: "",
-    comentario: ""
+    idAgenda: item.idAgenda,
+    nombre: item.nombre,
+    numExpediente: String(item.numExpediente),
+    fecha: item.fecha,
+    tipoCita: item.tipoCita,
+    hora: item.hora,
+    comentario: item.comentarios
   });
 
   const getClientesData = async () => {
@@ -32,14 +34,14 @@ const ClientesScreen = ({ navigation, route }) => {
       let response = await fetch(config.apiUrl + "/clientes");
       let data = await response.json();
       setClientes(data);
+
+      setSelected(item.nombre);
+      setSelectedTipo(item.tipoCita);
     } catch (error) {
       console.error(error);
     }
   };
 
-  useState(() => {
-    getClientesData();
-  }, []);
 
   const data = [
     {
@@ -54,12 +56,10 @@ const ClientesScreen = ({ navigation, route }) => {
     { key: '7', value: 'Cobro de Honorarios' }
   ]
 
-  /*idAgenda: item.idAgenda,
-    nombre: item.nombre,
-    fecha: item.fecha,
-    tipoCita:item.tipoCita,
-    hora:item.hora,
-    comentario:item.comentario*/
+  useState(() => {
+    getClientesData();
+    console.log("useState")
+  }, []);
 
   const handleDateChange = (event, date) => {
     setShowPicker(Platform.OS === 'ios');
@@ -77,43 +77,48 @@ const ClientesScreen = ({ navigation, route }) => {
     return selectedDate.toISOString().split('T')[0];
   };
 
-  /*useEffect(() => {
-     navigation.addListener('focus', () => {
-       //console.log(route.params.item.idAgenda)
-       //console.log(navigation)
-       if (route.params && route.params.item.idAgenda) {
-         setEditing(true);
-         //navigation.setOptions({ headerTitle: "Actualizar cita" });
-         (async () => {
-           //const agenda = await getAgenda(route.params.id);
-           setAgenda({
-             idAgenda: item.idAgenda,
-             nombre: item.nombre,
-             fecha: item.fecha,
-             tipoCita: item.tipoCita,
-             hora: item.hora,
-             comentario: item.comentario
-           });
-           setSelected(item.nombre);
-           setSelectedTipo(item.tipoCita);
-           setSelectedDate(new Date(item.fecha));
-         })();
-       }
-     });
-   }, [navigation]);*/
+  useEffect(() => {
+    navigation.addListener('focus', () => {
+      console.log("reloaded");
+      setSelectedDate(new Date(item.fecha));
+    });
+  }, [navigation]);
 
   const handleSubmit = async () => {
-    try {
-      if (!editing) {
-        //await saveagenda(agenda);
-      } else {
-        console.log(route.params.id, agenda)
-        //await updateagenda(route.params.id, {...agenda});
-      }
-      navigation.navigate("HomeScreen");
-    } catch (error) {
-      console.log(error);
-    }
+    agenda.nombre = selected;
+    agenda.tipoCita = selectedTipo;
+    agenda.fecha = formatSelectedDate();
+    setLoading(true);
+    var myHeaders = new Headers();
+
+    myHeaders.append("Content-Type", "application/json");
+
+    fetch(config.apiUrl + "/agenda/" + item.idAgenda, {
+      method: "PUT",
+      headers: myHeaders,
+      body: JSON.stringify({
+        nombre: agenda.nombre,
+        numExpediente: parseInt(agenda.numExpediente),
+        fecha: agenda.fecha,
+        hora: agenda.hora,
+        tipoCita: agenda.tipoCita,
+        comentarios: agenda.comentario
+      }),
+    })
+      .then((response) => {
+        setLoading(false);
+        response.text();
+      })
+      .then((result) => {
+        Alert.alert("", "Registro actualizado.")
+        navigation.navigate("Agenda digital");
+        console.log("Result");
+        console.log(result);
+      })
+      .catch((error) => {
+        console.log("Error");
+        console.log(error);
+      });
   };
 
   const handleChange = (name, value) => setAgenda({ ...agenda, [name]: value });
@@ -125,9 +130,11 @@ const ClientesScreen = ({ navigation, route }) => {
         boxStyles={styles.input}
         setSelected={(val) => setSelected(val)}
         data={clientes}
+        value={agenda.nombre}
         save="value"
         placeholder="Seleccione un cliente"
         placeholderTextColor="#576574"
+        onChange={(text) => handleChange("nombre", selected)}
       />
 
       <Text style={styles.text}>Expediente</Text>
@@ -184,11 +191,13 @@ const ClientesScreen = ({ navigation, route }) => {
       <Text style={styles.text}>Tipo de cita</Text>
       <SelectList
         boxStyles={styles.input}
-        setSelected={(val) => setSelectedTipo(val)}
         data={data}
+        setSelected={(val) => setSelectedTipo(val)}
+        value={agenda.tipoCita}
         save="value"
         placeholder="Seleccione el tipo de cita"
         placeholderTextColor="#576574"
+        onChange={(text) => handleChange("nombre", selectedTipo)}
       />
 
       <Text style={styles.text}>Comentarios</Text>

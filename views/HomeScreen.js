@@ -18,7 +18,6 @@ export default function HomeScreen({ navigation }) {
   useEffect(() => {
     navigation.addListener('focus', () => {
       getAgendaData();
-      console.log("reloaded");
     });
   }, [navigation]);
 

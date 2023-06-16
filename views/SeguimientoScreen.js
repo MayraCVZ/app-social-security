@@ -70,7 +70,6 @@ const SeguimientoScreen = ({ navigation, route }) => {
       })
       setSelected('');
       setSelectedDate(new Date());
-      console.log("reloaded");
     });
   }, [navigation]);
 

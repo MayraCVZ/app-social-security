@@ -1,4 +1,5 @@
 import * as React from "react";
+import { BackButton } from 'react-native';
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
 import { createStackNavigator } from "@react-navigation/stack";
 import Ionicons from "react-native-vector-icons/Ionicons";
@@ -18,7 +19,14 @@ const AgendaNavigator = () => {
   return (
     <Stack.Navigator>
       <Stack.Screen name="Agenda digital" component={AgendaNewScreen} />
-      <Stack.Screen name="ActualizarCita" component={AgendaScreen} />
+      <Stack.Screen name="ActualizarCita" component={AgendaScreen}
+        /*options={{
+          headerLeft: () => (
+            <BackButton
+              icon={() => <Icon name="custom-back-arrow" size={24} />}
+            />
+          ),
+        }}*/ />
     </Stack.Navigator>
   );
 };
@@ -31,13 +39,13 @@ const TabNavigation = () => {
           let iconName;
 
           if (route.name === "Reuniones") {
-            iconName = focused ? "home-outline" : "home";
+            iconName = focused ? "reader-outline" : "reader";
           } else if (route.name === "Seguimiento al expediente") {
             iconName = focused ? "newspaper-outline" : "newspaper";
           } else if (route.name === "AgendaTab") {
             iconName = focused ? "today-outline" : "today";
-          } else if (route.name === "LogOut") {
-            iconName = focused ? "log-out-outline" : "log-out";
+          } else if (route.name === "PerfilTab") {
+            iconName = focused ? "person-circle-outline" : "person-circle";
           }
           return <Ionicons name={iconName} size={size} color={color} />;
         },
@@ -60,13 +68,13 @@ const TabNavigation = () => {
             fontWeight: 'bold',
           }
         }} />
-      <Tab.Screen name="Seguimiento al expediente" component={SeguimientoScreen} />
       <Tab.Screen name="AgendaTab" component={AgendaNavigator}
         options={{
           title: "Agenda digital",
           headerStyle: { height: 0 }
         }} />
-      <Tab.Screen name="LogOut" component={UserData} options={{ title: "Cerrar sesion" }} />
+      <Tab.Screen name="Seguimiento al expediente" component={SeguimientoScreen} />
+      <Tab.Screen name="PerfilTab" component={UserData} options={{ title: "Mi perfil" }} />
 
     </Tab.Navigator>
   );

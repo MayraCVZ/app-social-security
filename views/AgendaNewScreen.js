@@ -81,7 +81,6 @@ const ClientesScreen = ({ navigation, route }) => {
       setSelected('');
       setSelectedTipo('');
       setSelectedDate(new Date());
-      console.log("reloaded");
     });
   }, [navigation]);
 
@@ -103,7 +102,7 @@ const ClientesScreen = ({ navigation, route }) => {
         fecha: agenda.fecha,
         hora: agenda.hora,
         tipoCita: agenda.tipoCita,
-        comentario: agenda.comentario
+        comentarios: agenda.comentario
       }),
     })
       .then((response) => {
